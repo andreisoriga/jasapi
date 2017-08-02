@@ -2,60 +2,6 @@
 
 Requires: Python >3.6
 
-### Usage ###
-
-**Update campaign version**
-
-```bash
-curl -X PUT -d '{"version": "2.3.0.4"}' http://localhost:5000/api/campaign/2.3.0.5 --header "Content-Type:application/json"
-```
-
-**Get all campaign versions**
-
-```bash
-curl http://localhost:5000/api/campaign
-```
-
-**Delete campaign version**
-
-```bash
-curl -X DELETE http://localhost:5000/api/campaign/2.3.0.5
-```
-
-**Get tests**
-
-```bash
-curl -i http://localhost:5000/api/tests\?version\=2.3.0.4
-
-curl -i http://localhost:5000/api/tests
-
-curl -i http://localhost:5000/api/tests\?version\=2.3.0.4\&filter\=project\;doors_id
-```
-
-**Update test**
-
-```bash
-curl -X PUT -d '{"result": [{"project": "MAV", "result": "OK"}],"comment": "updated"}' http://localhost:5000/api/tests/1 --header "Content-Type:application/json"
-```
-
-**Update multiple tests based on filter**
-
-```bash
-curl -X PATCH -d '{"project": "PKP","result": "OK"}' http://localhost:5000/api/tests\?version\=2.4.0.3\&automated\=1 --header "Content-Type:application/json"
-```
-
-**Delete test**
-
-```bash
-curl -X DELETE http://localhost:5000/api/tests/3
-```
-
-**Create a new campaign**
-
-```bash
-curl -F "file=@doors.zip" -F "version=2.4.0.1" http://localhost:5000/api/campaign
-```
-
 ### Installation: ###
 
 First create the venv:
@@ -71,13 +17,6 @@ Install all modules from requirements.txt:
 source venv/bin/activate
 pip install -r requirements.txt
 deactivate
-```
-
-Create database:
-
-```bash
-python run.py shell
-    db.create_all()
 ```
 
 **Start application**
