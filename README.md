@@ -1,4 +1,4 @@
-## General playground for flask and angularjs ##
+## Just Another Stupid Api used for fast storing of json data ##
 
 Requires: Python >3.6
 
