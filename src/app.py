@@ -1,4 +1,4 @@
-from flask import g
+from flask import g, request
 from flask_restful import Resource, Api
 from flask_cors import CORS
 
@@ -23,46 +23,100 @@ def create_app(config_file, config_env):
     app.config.from_yaml(config_file, config_env)
     app.url_map.strict_slashes = False
 
-    api.add_resource(TodoList, '/api/todos')
-    api.add_resource(Todo, '/api/todos/<idx>')
+    api.add_resource(ItemList, '/api/<table>')
+    api.add_resource(Item, '/api/<table>/<idx>')
 
     return app
 
 
-class Todo(Resource):
+class Item(Resource):
 
-    def get(self, idx):
+    def get(self, table, idx):
+        """ Grabs a row from table based on the id
+
+        return status code: 200 (OK) | 404 (Not found)
+        """
+
         db = get_db()
-        table = db['user']
+        data = db[table].find_one(id=idx)
 
-        # Insert a new record.
-        # table.insert(dict(name='John Doe', age=46, country='China'))
+        return data if data else '', 404
 
-        return table.find_one(id=idx)
+    def delete(self, table, idx):
+        """ Delete rows from the table.
 
-    # def delete(self, todo_id):
-    #     abort_if_todo_doesnt_exist(todo_id)
-    #     del TODOS[todo_id]
-    #     return '', 204
+            return status code: 204 (No Content) | 404 (Not found)
+        """
 
-    # def put(self, todo_id):
-    #     args = parser.parse_args()
-    #     task = {'task': args['task']}
-    #     TODOS[todo_id] = task
-    #     return task, 201
-
-
-# TodoList
-# shows a list of all todos, and lets you POST to add new tasks
-class TodoList(Resource):
-    def get(self):
         db = get_db()
-        table = db['todos']
-        return table.all()
 
-    # def post(self):
-    #     args = parser.parse_args()
-    #     todo_id = int(max(TODOS.keys()).lstrip('todo')) + 1
-    #     todo_id = 'todo%i' % todo_id
-    #     TODOS[todo_id] = {'task': args['task']}
-    #     return TODOS[todo_id], 201
+        status = db[table].delete(id=idx)
+
+        if not status:
+            return '', 404
+
+        return '', 204
+
+    def put(self, table, idx):
+        """ Update a row in the table.
+
+            return status code: 201 (Created) | 404 (Not found)
+        """
+
+        db = get_db()
+
+        json_data = request.get_json(force=True)
+        state = db[table].update(json_data, ['id'])
+
+        if not state:
+            return '', 404
+
+        return '', 201
+
+
+class ItemList(Resource):
+
+    # def __init__(self):
+    #     self.reqparse = reqparse.RequestParser()
+    #     self.reqparse.add_argument('name', type=str, required=True, help='No task title provided', location='json')
+    #     self.reqparse.add_argument('age', type=int, default="", location='json')
+
+    #     super(ItemList, self).__init__()
+
+    def get(self, table):
+        """ Grabs all rows from table
+
+        return status code: 200 (OK)
+        """
+
+        db = get_db()
+        return list(db[table].all())
+
+    def post(self, table):
+        """ Create a new row
+
+        return status code: 201 (Created)
+        """
+
+        # args = self.reqparse.parse_args()
+        db = get_db()
+
+        json_data = request.get_json(force=True)
+        item_id = db[table].insert(json_data)
+
+        return item_id, 201
+
+    def delete(self, table):
+        """ Drops the table
+
+        return status code: 204 (No Content)
+        """
+
+        db = get_db()
+
+        status = db[table].drop()
+
+        if not status:
+            return '', 500
+
+        return '', 204

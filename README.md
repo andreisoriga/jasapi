@@ -2,6 +2,45 @@
 
 Requires: Python >3.6
 
+## Usage ##
+
+Create a new resource:
+
+    curl -X POST -i http://127.0.0.1:5000/api/<TABLE> -d '<JSON_DATA>' --header "Content-Type:application/json"
+
+    Example:
+    curl -X POST -i http://127.0.0.1:5000/api/user -d '{"name": "John Doe", "age": 20}' --header "Content-Type:application/json"
+
+
+GET all rows from specified table:
+
+    curl -i http://127.0.0.1:5000/api/<TABLE>
+
+    Example:
+    curl -i http://127.0.0.1:5000/api/user
+
+
+DELETE one item from specified table and id:
+
+    curl -X DELETE -i http://127.0.0.1:5000/api/<TABLE>/<ID> --header "Content-Type:application/json"
+
+    Example:
+    curl -X DELETE -i http://127.0.0.1:5000/api/user/2 --header "Content-Type:application/json"
+
+PUT (update) a row from specified table and id:
+
+    curl -X PUT -i http://127.0.0.1:5000/api/<TABLE>/<ID> -d '<JSON_DATA_WITH_ID>' --header "Content-Type:application/json"
+
+    Example:
+    curl -X PUT -i http://127.0.0.1:5000/api/user/3 -d '{"id": 3, "name": "John Michael", "age": 40}' --header "Content-Type:application/json"
+
+DELETE all data (drops the table):
+
+    curl -X DELETE -i http://127.0.0.1:5000/api/<TABLE>
+
+    Example:
+    curl -X DELETE -i http://127.0.0.1:5000/api/user
+
 ### Installation: ###
 
 First create the venv:
@@ -32,8 +71,8 @@ Create file `/lib/systemd/system/myproject-gunicorn.service` with contents:
 
 [Unit]
 Description=Gunicorn server for myproject
-After=network.target
-After=syslog.target
+Wants=network-online.target
+After=network.target network-online.target
 
 [Service]
 User=asoriga
