@@ -143,9 +143,14 @@ Create file `/lib/systemd/system/myproject-gunicorn.service` with contents:
     [Install]
     WantedBy=multi-user.target
 
-Gunicorn process can now be managed using commands:
+Start service at boot:
 
     sudo systemctl daemon-reload
+
+    sudo systemctl enable myproject-gunicorn.service
+
+Gunicorn process can now be managed using commands:
+
     sudo systemctl stop myproject-gunicorn.service
     sudo systemctl start myproject-gunicorn.service
     sudo systemctl status myproject-gunicorn.service
