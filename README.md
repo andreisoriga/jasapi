@@ -43,91 +43,112 @@ DELETE all data (drops the table):
 
 ### Installation: ###
 
-First create the venv:
+**Install Python 3.6+**
 
-```bash
-cd <project_home>
-python -m venv venv
-```
+    sudo apt-get install build-essential libncursesw5-dev libgdbm-dev libc6-dev zlib1g-dev libsqlite3-dev tk-dev libssl-dev openssl
+
+Grab the latest Python version from https://www.python.org/downloads/
+
+Unpack it, cd into the new directory and execute:
+
+    ./configure
+
+    make
+
+    sudo make install
+
+Test if the version is correct:
+
+    python3.6 --version
+    pip3.6 --version
+
+If pip was not updated to Python 3.6, install this one also from sources:
+
+    wget https://bootstrap.pypa.io/get-pip.py --no-check-certificate
+    sudo python3.6 get-pip.py
+
+    pip3.6 --version
+
+**create the venv**
+
+    cd <project_home>
+    python3.6 -m venv venv
+
 
 Install all modules from requirements.txt:
 
-```bash
-source venv/bin/activate
-pip install -r requirements.txt
-deactivate
-```
+    source venv/bin/activate
+    pip install -r requirements.txt
+    deactivate
 
-**Start application**
+**Nginx setup**
 
-Execute command `python run.py runserver`
+Install nginx:
+
+    sudo apt install nginx
+
+Nginx configuration file (`/etc/nginx/sites-available/myproject`) shall look like:
+
+    server {
+        listen 5000;
+        listen [::]:5000;
+
+        server_name _;
+
+        location / {
+            include proxy_params;
+            proxy_pass http://unix:/home/webuser/myproject/myproject.sock;
+        }
+    }
+
+Check config:
+
+    sudo nginx -t
+
+Enable server:
+
+Go to `/etc/nginx/sites-enabled/` and:
+
+    sudo rm default
+    sudo ln -s /etc/nginx/sites-available/myproject myproject
+
+Restart nginx:
+
+    sudo service nginx restart
+
+**Nginx Debug**
+
+NGINX error file: `/var/log/nginx/error.log`
 
 **Gunicorn setup**
 
 Create file `/lib/systemd/system/myproject-gunicorn.service` with contents:
 
-```
-# Gunicorn Site systemd service file
+    # Gunicorn Site systemd service file
 
-[Unit]
-Description=Gunicorn server for myproject
-Wants=network-online.target
-After=network.target network-online.target
+    [Unit]
+    Description=Gunicorn server for myproject
+    Wants=network-online.target
+    After=network.target network-online.target
 
-[Service]
-User=asoriga
-Group=www-data
-WorkingDirectory=/home/asoriga/application/python3-mqtt-app
-Environment=PATH=/home/asoriga/application/python3-mqtt-app/venv/bin
-ExecStart=/home/asoriga/application/python3-mqtt-app/venv/bin/gunicorn --worker-class eventlet --workers 1 --bind unix:myproject.sock wsgi:app --env FLASK_CONF_FILE="/home/asoriga/application/config.yml" --env FLASK_CONF_ENV="PRODUCTION"
+    [Service]
+    User=webuser
+    Group=www-data
+    WorkingDirectory=/home/user/myproject
+    Environment=PATH=/home/user/myproject/venv/bin
+    ExecStart=/home/user/myproject/venv/bin/gunicorn --worker-class eventlet --workers 4 --bind unix:myproject.sock wsgi:app --env FLASK_CONF_FILE="/home/user/myproject/config.yml" --env FLASK_CONF_ENV="PRODUCTION"
 
-Restart=on-failure
+    Restart=on-failure
 
-[Install]
-WantedBy=multi-user.target
-```
+    [Install]
+    WantedBy=multi-user.target
 
 Gunicorn process can now be managed using commands:
 
-```bash
-systemctl daemon-reload
-sudo systemctl stop myproject-gunicorn.service
-sudo systemctl start myproject-gunicorn.service
-sudo systemctl status myproject-gunicorn.service
-```
-
-**Nginx setup**
-
-WARNING: remove the default connection from `/etc/nginx/sites-enabled/default`
-
-Nginx configuration file (`/etc/nginx/sites-available/myproject`) shall look like:
-
-```
-server {
-    listen 80;
-    server_name "";
-
-    listen 443 ssl;
-    ssl_certificate /etc/nginx/ssl/nginx.crt;
-    ssl_certificate_key /etc/nginx/ssl/nginx.key;
-
-    location / {
-        include proxy_params;
-        proxy_pass http://unix:/home/user/myproject/myproject.sock;
-    }
-}
-```
-
-**Debug**
-
-NGINX wrror file: `/var/log/nginx/error.log`
-
-If permission errors use this hack (find a better alternative for this):
-
-    chmod g+x /home/<user>/
-    chmod g+r /home/<user>/
-
-And also set all permissions to the `myproject` folder...
+    sudo systemctl daemon-reload
+    sudo systemctl stop myproject-gunicorn.service
+    sudo systemctl start myproject-gunicorn.service
+    sudo systemctl status myproject-gunicorn.service
 
 **Misc**
 
